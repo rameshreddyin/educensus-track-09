@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -10,7 +9,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
 } from 'recharts';
 import { 
-  Download, FileSpreadsheet, FilePdf, AlertTriangle, User
+  Download, FileText, FileSpreadsheet, AlertTriangle, User
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -332,7 +331,7 @@ export const AttendanceReports = () => {
                   onClick={() => handleGenerateReport('pdf')}
                   disabled={isGeneratingReport}
                 >
-                  <FilePdf className="h-4 w-4" />
+                  <FileText className="h-4 w-4" />
                   <span>Export as PDF</span>
                 </Button>
                 <Button 
@@ -399,7 +398,7 @@ export const AttendanceReports = () => {
                   onClick={() => handleGenerateReport('pdf')}
                   disabled={isGeneratingReport}
                 >
-                  <FilePdf className="h-4 w-4" />
+                  <FileText className="h-4 w-4" />
                   <span>Export as PDF</span>
                 </Button>
                 <Button 
@@ -466,7 +465,7 @@ export const AttendanceReports = () => {
                   onClick={() => handleGenerateReport('pdf')}
                   disabled={isGeneratingReport}
                 >
-                  <FilePdf className="h-4 w-4" />
+                  <FileText className="h-4 w-4" />
                   <span>Export as PDF</span>
                 </Button>
                 <Button 
