@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -99,9 +98,8 @@ export const AttendanceReports = () => {
     }, 1500);
   };
 
-  // This is the correct way to handle the icon click
   const handleIconClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // This prevents the event from propagating up to the button
+    e.stopPropagation();
   };
 
   const resetFilters = () => {
@@ -113,11 +111,9 @@ export const AttendanceReports = () => {
     toast.success("Filters have been reset");
   };
 
-  // Fix: Update the function to handle clicks on XAxis or data points
   const showClassDetails = (className: string) => {
     toast.info(`Loading detailed report for ${className}`);
     
-    // Find the class data by name
     const mockClassData = classAttendanceData.find(c => c.name === className) || null;
     setSelectedClassData(mockClassData);
   };
@@ -162,7 +158,6 @@ export const AttendanceReports = () => {
         </div>
       </div>
       
-      {/* Top Cards Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="bg-white text-gray-900 shadow-sm hover:shadow transition-shadow">
           <CardHeader className="pb-2">
@@ -204,7 +199,6 @@ export const AttendanceReports = () => {
         </Card>
       </div>
       
-      {/* Chart Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="md:col-span-2 shadow-sm hover:shadow transition-shadow">
           <CardHeader>
@@ -276,10 +270,10 @@ export const AttendanceReports = () => {
                   <XAxis 
                     dataKey="name" 
                     tick={{ fill: '#666' }}
-                    onClick={(data) => {
-                      // Fixed: Properly handle XAxis click by checking if data exists
-                      if (data && data.hasOwnProperty('value')) {
-                        showClassDetails(data.value);
+                    onClick={(event) => {
+                      const target = event.target as SVGElement;
+                      if (target && target.textContent) {
+                        showClassDetails(target.textContent);
                       }
                     }}
                     className="cursor-pointer"
