@@ -13,9 +13,11 @@ export const AppLayout = ({ children, title, subtitle }: AppLayoutProps) => {
   return (
     <div className="flex h-screen bg-background">
       <AppSidebar />
-      <main className="flex-1 overflow-auto p-6">
+      <main className="flex-1 overflow-auto">
         <Header title={title} subtitle={subtitle} />
-        {children}
+        <div className="px-6 py-4 pb-16">
+          {children}
+        </div>
       </main>
     </div>
   );

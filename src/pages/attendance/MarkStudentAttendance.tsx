@@ -1,18 +1,19 @@
 
-import React, { useState } from 'react';
-import { Calendar } from '@/components/ui/calendar';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Check, Grid3X3, List, Search, X } from 'lucide-react';
+import { Check, CalendarIcon, Grid3X3, List, Search, X, Filter } from 'lucide-react';
 import { format } from 'date-fns';
 import { StudentTable } from './components/StudentTable';
 import { StudentGrid } from './components/StudentGrid';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 
 // Mock data
 const classes = ['Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5', 'Class 6'];
@@ -37,21 +38,28 @@ const generateStudents = (count: number): Student[] => {
 
 export const MarkStudentAttendance = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
-  const [selectedClass, setSelectedClass] = useState<string>('');
-  const [selectedSection, setSelectedSection] = useState<string>('');
+  const [selectedClass, setSelectedClass] = useState<string>('Class 1'); // Default class
+  const [selectedSection, setSelectedSection] = useState<string>('Section A'); // Default section
   const [students, setStudents] = useState<Student[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectAll, setSelectAll] = useState(false);
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
   const [isLoading, setIsLoading] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
 
-  // Load students when class and section are selected
-  const handleLoadStudents = () => {
-    if (!selectedClass || !selectedSection) {
-      toast.error('Please select both class and section');
-      return;
+  // Load students automatically on initial render
+  useEffect(() => {
+    loadStudents();
+  }, []);
+
+  // Load students when class and section change
+  useEffect(() => {
+    if (selectedClass && selectedSection) {
+      loadStudents();
     }
-    
+  }, [selectedClass, selectedSection]);
+
+  const loadStudents = () => {
     setIsLoading(true);
     // Simulate API call
     setTimeout(() => {
@@ -81,6 +89,7 @@ export const MarkStudentAttendance = () => {
       prev.map(student => ({ ...student, status }))
     );
     setSelectAll(true);
+    toast.success(`All students marked as ${status}`);
   };
 
   // Handle save attendance
@@ -103,31 +112,68 @@ export const MarkStudentAttendance = () => {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Select Date</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Calendar
-              mode="single"
-              selected={date}
-              onSelect={setDate}
-              className="rounded-md border"
-            />
-          </CardContent>
-        </Card>
+      <Card className="shadow-md">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-lg">
+            {selectedClass} - {selectedSection} | {date ? format(date, 'MMMM d, yyyy') : 'Today'}
+          </CardTitle>
+          
+          <div className="flex items-center gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8 gap-1">
+                  <CalendarIcon className="h-4 w-4" />
+                  <span className="hidden sm:inline">Date</span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="end">
+                <Calendar
+                  mode="single"
+                  selected={date}
+                  onSelect={setDate}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowFilters(!showFilters)}
+              className="h-8 gap-1"
+            >
+              <Filter className="h-4 w-4" />
+              <span className="hidden sm:inline">Filters</span>
+            </Button>
+            
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="sm"
+                className={cn("h-8 w-8 p-0", viewMode === 'table' && "bg-secondary")}
+                onClick={() => setViewMode('table')}
+              >
+                <List className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className={cn("h-8 w-8 p-0", viewMode === 'grid' && "bg-secondary")}
+                onClick={() => setViewMode('grid')}
+              >
+                <Grid3X3 className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
         
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-lg">Select Class & Section</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="class">Class</Label>
+        {showFilters && (
+          <CardContent className="pb-3 pt-0 border-b">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-2">
+              <div className="space-y-1">
+                <Label htmlFor="class" className="text-xs font-medium">Class</Label>
                 <Select value={selectedClass} onValueChange={setSelectedClass}>
-                  <SelectTrigger id="class">
+                  <SelectTrigger id="class" className="h-8">
                     <SelectValue placeholder="Select Class" />
                   </SelectTrigger>
                   <SelectContent>
@@ -140,10 +186,10 @@ export const MarkStudentAttendance = () => {
                 </Select>
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="section">Section</Label>
+              <div className="space-y-1">
+                <Label htmlFor="section" className="text-xs font-medium">Section</Label>
                 <Select value={selectedSection} onValueChange={setSelectedSection}>
-                  <SelectTrigger id="section">
+                  <SelectTrigger id="section" className="h-8">
                     <SelectValue placeholder="Select Section" />
                   </SelectTrigger>
                   <SelectContent>
@@ -156,101 +202,79 @@ export const MarkStudentAttendance = () => {
                 </Select>
               </div>
             </div>
-            
-            <Button 
-              className="mt-4 w-full"
-              onClick={handleLoadStudents}
-              disabled={!selectedClass || !selectedSection || isLoading}
-            >
-              {isLoading ? 'Loading...' : 'Load Students'}
-            </Button>
           </CardContent>
-        </Card>
-      </div>
-      
-      {students.length > 0 && (
-        <Card className="animate-fade-in">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg">
-              {selectedClass} - {selectedSection} Attendance for {date ? format(date, 'MMMM d, yyyy') : 'Today'}
-            </CardTitle>
-            
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className={cn("px-2", viewMode === 'table' && "bg-secondary")}
-                onClick={() => setViewMode('table')}
-              >
-                <List size={16} />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className={cn("px-2", viewMode === 'grid' && "bg-secondary")}
-                onClick={() => setViewMode('grid')}
-              >
-                <Grid3X3 size={16} />
-              </Button>
-            </div>
-          </CardHeader>
-          
-          <CardContent>
-            <div className="flex flex-col sm:flex-row justify-between gap-4 mb-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by name or roll number..."
-                  className="pl-8"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-              
-              <div className="flex flex-wrap gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="flex items-center gap-1 bg-green-50 text-attendance-present hover:bg-green-100 hover:text-attendance-present"
-                  onClick={() => handleSelectAll('present')}
-                >
-                  <Check size={14} /> Mark All Present
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="flex items-center gap-1 bg-red-50 text-attendance-absent hover:bg-red-100 hover:text-attendance-absent"
-                  onClick={() => handleSelectAll('absent')}
-                >
-                  <X size={14} /> Mark All Absent
-                </Button>
-              </div>
+        )}
+        
+        <CardContent className="pt-4">
+          <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
+            <div className="flex-1 relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by name or roll number..."
+                className="pl-8 h-9"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
             
-            {viewMode === 'table' ? (
-              <StudentTable 
-                students={filteredStudents} 
-                onStatusChange={handleStatusChange} 
-              />
-            ) : (
-              <StudentGrid 
-                students={filteredStudents} 
-                onStatusChange={handleStatusChange} 
-              />
-            )}
-            
-            <div className="mt-6 flex justify-end">
+            <div className="flex flex-wrap gap-2">
               <Button 
-                className="px-8"
-                onClick={handleSaveAttendance}
-                disabled={isLoading}
+                variant="outline" 
+                size="sm"
+                className="flex items-center gap-1 bg-green-50 text-attendance-present hover:bg-green-100 hover:text-attendance-present h-9"
+                onClick={() => handleSelectAll('present')}
               >
-                {isLoading ? 'Saving...' : 'Save Attendance'}
+                <Check size={14} /> Mark All Present
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="flex items-center gap-1 bg-red-50 text-attendance-absent hover:bg-red-100 hover:text-attendance-absent h-9"
+                onClick={() => handleSelectAll('absent')}
+              >
+                <X size={14} /> Mark All Absent
               </Button>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+          
+          {isLoading ? (
+            <div className="h-64 flex items-center justify-center">
+              <div className="text-center">
+                <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-3"></div>
+                <p className="text-muted-foreground">Loading students...</p>
+              </div>
+            </div>
+          ) : filteredStudents.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">No students found. Try changing your filters.</p>
+            </div>
+          ) : (
+            <>
+              {viewMode === 'table' ? (
+                <StudentTable 
+                  students={filteredStudents} 
+                  onStatusChange={handleStatusChange} 
+                />
+              ) : (
+                <StudentGrid 
+                  students={filteredStudents} 
+                  onStatusChange={handleStatusChange} 
+                />
+              )}
+            </>
+          )}
+          
+          <div className="mt-6 flex justify-end">
+            <Button 
+              className="px-8"
+              onClick={handleSaveAttendance}
+              disabled={isLoading}
+            >
+              {isLoading ? 'Saving...' : 'Save Attendance'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

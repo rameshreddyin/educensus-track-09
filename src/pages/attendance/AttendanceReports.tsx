@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -66,7 +67,22 @@ export const AttendanceReports = () => {
     
     // Simulate API call for report generation
     setTimeout(() => {
-      toast.success(`${format.toUpperCase()} report generated successfully`);
+      // In a production environment, this would trigger a file download
+      const fileName = `attendance_report_${format}_${Date.now()}`;
+      
+      // Create a dummy download for demonstration purposes
+      if (format === 'pdf' || format === 'excel' || format === 'csv') {
+        // Create element with download attribute
+        const element = document.createElement('a');
+        element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent('Sample attendance report content'));
+        element.setAttribute('download', `${fileName}.${format}`);
+        element.style.display = 'none';
+        document.body.appendChild(element);
+        element.click();
+        document.body.removeChild(element);
+      }
+      
+      toast.success(`${format.toUpperCase()} report generated and downloaded successfully`);
       setIsGeneratingReport(false);
     }, 1500);
   };

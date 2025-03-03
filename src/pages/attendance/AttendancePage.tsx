@@ -34,7 +34,7 @@ const AttendancePage = () => {
   return (
     <AppLayout 
       title="Attendance Management" 
-      subtitle="Track and manage attendance records for students and staff"
+      subtitle="Mark attendance and generate reports"
     >
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid grid-cols-3 w-full max-w-md mb-6">
