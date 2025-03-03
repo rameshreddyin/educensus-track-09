@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -27,7 +26,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
-// Mock data for class attendance
 const classAttendanceData = [
   { name: 'Class 1', present: 42, absent: 5, late: 3 },
   { name: 'Class 2', present: 38, absent: 8, late: 4 },
@@ -37,7 +35,6 @@ const classAttendanceData = [
   { name: 'Class 6', present: 36, absent: 10, late: 4 }
 ];
 
-// Mock data for monthly attendance trend
 const monthlyTrendData = [
   { name: 'Jan', attendance: 92 },
   { name: 'Feb', attendance: 94 },
@@ -50,14 +47,12 @@ const monthlyTrendData = [
   { name: 'Sep', attendance: 92 }
 ];
 
-// Mock data for attendance distribution
 const attendanceDistributionData = [
   { name: 'Present', value: 85 },
   { name: 'Absent', value: 10 },
   { name: 'Late', value: 5 }
 ];
 
-// Mock data for most absent students
 const frequentlyAbsentStudents = [
   { id: 1, name: 'John Smith', rollNumber: 'R-1023', absences: 8, class: 'Class 3' },
   { id: 2, name: 'Emily Johnson', rollNumber: 'R-1045', absences: 7, class: 'Class 2' },
@@ -66,7 +61,6 @@ const frequentlyAbsentStudents = [
   { id: 5, name: 'David Wilson', rollNumber: 'R-1112', absences: 5, class: 'Class 5' }
 ];
 
-// Colors for pie chart - using grayscale
 const COLORS = ['#222222', '#666666', '#999999', '#cccccc'];
 
 export const AttendanceReports = () => {
@@ -80,14 +74,10 @@ export const AttendanceReports = () => {
   const handleGenerateReport = (format: 'pdf' | 'excel' | 'csv') => {
     setIsGeneratingReport(true);
     
-    // Simulate API call for report generation
     setTimeout(() => {
-      // In a production environment, this would trigger a file download
       const fileName = `attendance_report_${format}_${Date.now()}`;
       
-      // Create a dummy download for demonstration purposes
       if (format === 'pdf' || format === 'excel' || format === 'csv') {
-        // Create element with download attribute
         const element = document.createElement('a');
         element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent('Sample attendance report content'));
         element.setAttribute('download', `${fileName}.${format}`);
@@ -100,6 +90,10 @@ export const AttendanceReports = () => {
       toast.success(`${format.toUpperCase()} report generated and downloaded successfully`);
       setIsGeneratingReport(false);
     }, 1500);
+  };
+
+  const handleIconClick = (e: React.MouseEvent) => {
+    e.preventDefault();
   };
 
   return (
@@ -449,7 +443,7 @@ export const AttendanceReports = () => {
                           variant="outline"
                           className="w-full justify-start text-left font-normal"
                         >
-                          <Calendar className="mr-2 h-4 w-4" />
+                          <Calendar className="mr-2 h-4 w-4" onClick={handleIconClick} />
                           {startDate ? format(startDate, "PPP") : "Select date"}
                         </Button>
                       </PopoverTrigger>
@@ -540,7 +534,7 @@ export const AttendanceReports = () => {
                           variant="outline"
                           className="w-[180px] justify-start text-left font-normal"
                         >
-                          <Calendar className="mr-2 h-4 w-4" />
+                          <Calendar className="mr-2 h-4 w-4" onClick={handleIconClick} />
                           {startDate ? format(startDate, "MMM d, yyyy") : "Start date"}
                         </Button>
                       </PopoverTrigger>
@@ -560,7 +554,7 @@ export const AttendanceReports = () => {
                           variant="outline"
                           className="w-[180px] justify-start text-left font-normal"
                         >
-                          <Calendar className="mr-2 h-4 w-4" />
+                          <Calendar className="mr-2 h-4 w-4" onClick={handleIconClick} />
                           {endDate ? format(endDate, "MMM d, yyyy") : "End date"}
                         </Button>
                       </PopoverTrigger>
@@ -651,7 +645,7 @@ export const AttendanceReports = () => {
                           variant="outline"
                           className="w-full justify-start text-left font-normal"
                         >
-                          <Calendar className="mr-2 h-4 w-4" />
+                          <Calendar className="mr-2 h-4 w-4" onClick={handleIconClick} />
                           {startDate ? format(startDate, "MMMM yyyy") : "Select month"}
                         </Button>
                       </PopoverTrigger>

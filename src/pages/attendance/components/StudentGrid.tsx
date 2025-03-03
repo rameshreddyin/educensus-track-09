@@ -1,7 +1,8 @@
 
 import React from 'react';
-import { Check, Clock, UserX, UserRoundX } from 'lucide-react';
+import { Check, Clock, UserX, UserRoundX, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 type Student = {
   id: number;
@@ -13,9 +14,10 @@ type Student = {
 interface StudentGridProps {
   students: Student[];
   onStatusChange: (studentId: number, status: 'present' | 'absent' | 'late' | 'leave') => void;
+  onRemoveStatus: (studentId: number) => void;
 }
 
-export const StudentGrid = ({ students, onStatusChange }: StudentGridProps) => {
+export const StudentGrid = ({ students, onStatusChange, onRemoveStatus }: StudentGridProps) => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
       {students.map((student) => (
@@ -106,6 +108,16 @@ export const StudentGrid = ({ students, onStatusChange }: StudentGridProps) => {
                 )}
               </span>
             </div>
+            
+            {student.status && (
+              <button
+                className="mt-2 text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1"
+                onClick={() => onRemoveStatus(student.id)}
+              >
+                <X size={12} />
+                <span>Clear status</span>
+              </button>
+            )}
           </div>
         </div>
       ))}

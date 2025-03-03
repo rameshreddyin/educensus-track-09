@@ -1,7 +1,8 @@
 
 import React from 'react';
-import { Check, Clock, UserX, UserRoundX } from 'lucide-react';
+import { Check, Clock, UserX, UserRoundX, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 type Staff = {
   id: number;
@@ -15,9 +16,10 @@ type Staff = {
 interface StaffGridProps {
   staff: Staff[];
   onStatusChange: (staffId: number, status: 'present' | 'absent' | 'late' | 'leave') => void;
+  onRemoveStatus: (staffId: number) => void;
 }
 
-export const StaffGrid = ({ staff, onStatusChange }: StaffGridProps) => {
+export const StaffGrid = ({ staff, onStatusChange, onRemoveStatus }: StaffGridProps) => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
       {staff.map((member) => (
@@ -109,6 +111,16 @@ export const StaffGrid = ({ staff, onStatusChange }: StaffGridProps) => {
                 )}
               </span>
             </div>
+            
+            {member.status && (
+              <button
+                className="mt-2 text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1"
+                onClick={() => onRemoveStatus(member.id)}
+              >
+                <X size={12} />
+                <span>Clear status</span>
+              </button>
+            )}
           </div>
         </div>
       ))}

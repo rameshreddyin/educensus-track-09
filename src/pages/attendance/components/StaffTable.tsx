@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Check, Clock, UserX, UserRoundX } from 'lucide-react';
+import { Check, Clock, UserX, UserRoundX, X } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
@@ -16,9 +16,10 @@ type Staff = {
 interface StaffTableProps {
   staff: Staff[];
   onStatusChange: (staffId: number, status: 'present' | 'absent' | 'late' | 'leave') => void;
+  onRemoveStatus: (staffId: number) => void;
 }
 
-export const StaffTable = ({ staff, onStatusChange }: StaffTableProps) => {
+export const StaffTable = ({ staff, onStatusChange, onRemoveStatus }: StaffTableProps) => {
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full bg-white rounded-lg overflow-hidden">
@@ -169,6 +170,22 @@ export const StaffTable = ({ staff, onStatusChange }: StaffTableProps) => {
                         <p>Mark as Leave</p>
                       </TooltipContent>
                     </Tooltip>
+
+                    {member.status && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            className="p-1.5 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+                            onClick={() => onRemoveStatus(member.id)}
+                          >
+                            <X size={14} />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Remove Status</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
                   </div>
                 </TooltipProvider>
               </td>

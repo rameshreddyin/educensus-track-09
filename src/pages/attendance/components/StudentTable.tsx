@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Check, Clock, UserX, UserRoundX } from 'lucide-react';
+import { Check, Clock, UserX, UserRoundX, X } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
@@ -14,9 +14,10 @@ type Student = {
 interface StudentTableProps {
   students: Student[];
   onStatusChange: (studentId: number, status: 'present' | 'absent' | 'late' | 'leave') => void;
+  onRemoveStatus: (studentId: number) => void;
 }
 
-export const StudentTable = ({ students, onStatusChange }: StudentTableProps) => {
+export const StudentTable = ({ students, onStatusChange, onRemoveStatus }: StudentTableProps) => {
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full bg-white rounded-lg overflow-hidden">
@@ -161,6 +162,22 @@ export const StudentTable = ({ students, onStatusChange }: StudentTableProps) =>
                         <p>Mark as Leave</p>
                       </TooltipContent>
                     </Tooltip>
+
+                    {student.status && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            className="p-1.5 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+                            onClick={() => onRemoveStatus(student.id)}
+                          >
+                            <X size={14} />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Remove Status</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
                   </div>
                 </TooltipProvider>
               </td>
