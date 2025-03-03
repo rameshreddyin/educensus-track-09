@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+<lov-code>
+import React, { useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -12,7 +13,8 @@ import {
 } from 'recharts';
 import { 
   Download, FileText, FileSpreadsheet, AlertTriangle, User,
-  Calendar, ChevronDown, ArrowDownToLine, ArrowRight, Filter
+  Calendar, ChevronDown, ArrowDownToLine, ArrowRight, Filter,
+  RefreshCw, X
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { 
@@ -25,6 +27,7 @@ import {
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 
 const classAttendanceData = [
   { name: 'Class 1', present: 42, absent: 5, late: 3 },
@@ -67,15 +70,19 @@ export const AttendanceReports = () => {
   const [reportType, setReportType] = useState('class');
   const [reportPeriod, setReportPeriod] = useState('monthly');
   const [selectedClass, setSelectedClass] = useState('');
+  const [reportScope, setReportScope] = useState('students'); // 'students' or 'staff'
   const [startDate, setStartDate] = useState<Date | undefined>(new Date());
   const [endDate, setEndDate] = useState<Date | undefined>(new Date());
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [activeFilters, setActiveFilters] = useState(false);
+  const [selectedClassData, setSelectedClassData] = useState(null);
 
   const handleGenerateReport = (format: 'pdf' | 'excel' | 'csv') => {
     setIsGeneratingReport(true);
     
     setTimeout(() => {
-      const fileName = `attendance_report_${format}_${Date.now()}`;
+      const reportName = reportScope === 'students' ? 'student_attendance' : 'staff_attendance';
+      const fileName = `${reportName}_report_${format}_${Date.now()}`;
       
       if (format === 'pdf' || format === 'excel' || format === 'csv') {
         const element = document.createElement('a');
@@ -92,18 +99,77 @@ export const AttendanceReports = () => {
     }, 1500);
   };
 
+  // This is the correct way to handle the icon click
   const handleIconClick = (e: React.MouseEvent) => {
-    e.preventDefault();
+    e.stopPropagation(); // This prevents the event from propagating up to the button
+  };
+
+  const resetFilters = () => {
+    setReportType('class');
+    setSelectedClass('');
+    setStartDate(new Date());
+    setEndDate(new Date());
+    setActiveFilters(false);
+    toast.success("Filters have been reset");
+  };
+
+  // Mock function to show class-specific data
+  const showClassDetails = (className: string) => {
+    // In a real application, this would fetch data for the specific class
+    toast.info(`Loading detailed report for ${className}`);
+    
+    // For demo purposes, we'll just set some mock data
+    const mockClassData = classAttendanceData.find(c => c.name === className) || null;
+    setSelectedClassData(mockClassData);
   };
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-2xl font-bold text-gray-900">Attendance Analytics</h2>
+        
+        <div className="flex items-center gap-2">
+          <Select 
+            value={reportScope} 
+            onValueChange={setReportScope}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Report Scope" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="students">Student Reports</SelectItem>
+              <SelectItem value="staff">Staff Reports</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          {activeFilters && (
+            <TooltipProvider>
+              <UITooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    onClick={resetFilters}
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Reset filters</p>
+                </TooltipContent>
+              </UITooltip>
+            </TooltipProvider>
+          )}
+        </div>
+      </div>
+      
+      {/* Top Cards Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="bg-white text-gray-900 shadow-sm hover:shadow transition-shadow">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg font-medium flex items-center gap-2">
-              <div className="w-3 h-3 bg-attendance-present rounded-full"></div>
-              Present Rate
+              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+              {reportScope === 'students' ? 'Present Rate' : 'Staff Present Rate'}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -115,8 +181,8 @@ export const AttendanceReports = () => {
         <Card className="bg-white text-gray-900 shadow-sm hover:shadow transition-shadow">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg font-medium flex items-center gap-2">
-              <div className="w-3 h-3 bg-attendance-absent rounded-full"></div>
-              Absence Rate
+              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+              {reportScope === 'students' ? 'Absence Rate' : 'Staff Absence Rate'}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -128,8 +194,8 @@ export const AttendanceReports = () => {
         <Card className="bg-white text-gray-900 shadow-sm hover:shadow transition-shadow">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg font-medium flex items-center gap-2">
-              <div className="w-3 h-3 bg-attendance-late rounded-full"></div>
-              Late Arrivals
+              <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
+              {reportScope === 'students' ? 'Late Arrivals' : 'Staff Late Arrivals'}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -139,20 +205,32 @@ export const AttendanceReports = () => {
         </Card>
       </div>
       
+      {/* Chart Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="md:col-span-2 shadow-sm hover:shadow transition-shadow">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Class Attendance Overview</CardTitle>
-                <CardDescription>Comparison of attendance across all classes</CardDescription>
+                <CardTitle>
+                  {reportScope === 'students' ? 'Class Attendance Overview' : 'Department Attendance Overview'}
+                </CardTitle>
+                <CardDescription>
+                  {reportScope === 'students' 
+                    ? 'Comparison of attendance across all classes' 
+                    : 'Comparison of attendance across all departments'}
+                </CardDescription>
               </div>
               
               <div className="flex items-center gap-2">
                 <TooltipProvider>
                   <UITooltip>
                     <TooltipTrigger asChild>
-                      <Button variant="outline" size="sm" className="h-8">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="h-8"
+                        onClick={() => setActiveFilters(!activeFilters)}
+                      >
                         <Filter className="h-4 w-4 mr-1" /> 
                         <span className="hidden sm:inline">Filter</span>
                       </Button>
@@ -196,7 +274,12 @@ export const AttendanceReports = () => {
                   margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-                  <XAxis dataKey="name" tick={{ fill: '#666' }} />
+                  <XAxis 
+                    dataKey="name" 
+                    tick={{ fill: '#666' }}
+                    onClick={(data) => data && showClassDetails(data.value)}
+                    className="cursor-pointer"
+                  />
                   <YAxis tick={{ fill: '#666' }} />
                   <Tooltip 
                     contentStyle={{ 
@@ -207,12 +290,72 @@ export const AttendanceReports = () => {
                     }}
                   />
                   <Legend />
-                  <Bar dataKey="present" stackId="a" fill="#22c55e" name="Present" />
-                  <Bar dataKey="absent" stackId="a" fill="#ef4444" name="Absent" />
-                  <Bar dataKey="late" stackId="a" fill="#f59e0b" name="Late" />
+                  <Bar 
+                    dataKey="present" 
+                    stackId="a" 
+                    fill="#22c55e" 
+                    name="Present" 
+                    cursor="pointer"
+                    onClick={(data) => showClassDetails(data.name)}
+                  />
+                  <Bar 
+                    dataKey="absent" 
+                    stackId="a" 
+                    fill="#ef4444" 
+                    name="Absent" 
+                    cursor="pointer"
+                    onClick={(data) => showClassDetails(data.name)}
+                  />
+                  <Bar 
+                    dataKey="late" 
+                    stackId="a" 
+                    fill="#f59e0b" 
+                    name="Late" 
+                    cursor="pointer"
+                    onClick={(data) => showClassDetails(data.name)}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>
+            
+            {selectedClassData && (
+              <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="font-semibold text-lg">{selectedClassData.name} Detailed Report</h3>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setSelectedClassData(null)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                
+                <div className="grid grid-cols-3 gap-4 mb-3">
+                  <div className="bg-white p-3 rounded-md shadow-sm">
+                    <div className="text-sm text-gray-500">Present</div>
+                    <div className="text-2xl font-bold text-green-600">{selectedClassData.present}</div>
+                  </div>
+                  <div className="bg-white p-3 rounded-md shadow-sm">
+                    <div className="text-sm text-gray-500">Absent</div>
+                    <div className="text-2xl font-bold text-red-600">{selectedClassData.absent}</div>
+                  </div>
+                  <div className="bg-white p-3 rounded-md shadow-sm">
+                    <div className="text-sm text-gray-500">Late</div>
+                    <div className="text-2xl font-bold text-amber-600">{selectedClassData.late}</div>
+                  </div>
+                </div>
+                
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleGenerateReport('pdf')}
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  Export Class Report
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
         
@@ -223,7 +366,12 @@ export const AttendanceReports = () => {
                 <CardTitle>Monthly Attendance Trend</CardTitle>
                 <CardDescription>Overall attendance percentage over time</CardDescription>
               </div>
-              <Button variant="outline" size="sm" className="h-8">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-8"
+                onClick={() => handleGenerateReport('pdf')}
+              >
                 <Download className="h-4 w-4" />
               </Button>
             </div>
@@ -267,9 +415,18 @@ export const AttendanceReports = () => {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle>Attendance Distribution</CardTitle>
-                <CardDescription>School-wide attendance status breakdown</CardDescription>
+                <CardDescription>
+                  {reportScope === 'students' 
+                    ? 'School-wide attendance status breakdown' 
+                    : 'Staff attendance status breakdown'}
+                </CardDescription>
               </div>
-              <Button variant="outline" size="sm" className="h-8">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-8"
+                onClick={() => handleGenerateReport('pdf')}
+              >
                 <Download className="h-4 w-4" />
               </Button>
             </div>
@@ -314,11 +471,26 @@ export const AttendanceReports = () => {
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-amber-500" />
               <div>
-                <CardTitle>Frequently Absent Students</CardTitle>
-                <CardDescription>Students with the highest absence rates this term</CardDescription>
+                <CardTitle>
+                  {reportScope === 'students' 
+                    ? 'Frequently Absent Students' 
+                    : 'Frequently Absent Staff'
+                  }
+                </CardTitle>
+                <CardDescription>
+                  {reportScope === 'students'
+                    ? 'Students with the highest absence rates this term'
+                    : 'Staff members with the highest absence rates this term'
+                  }
+                </CardDescription>
               </div>
             </div>
-            <Button variant="outline" size="sm" className="h-8">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="h-8"
+              onClick={() => handleGenerateReport('excel')}
+            >
               <Download className="h-4 w-4 mr-1" />
               <span className="hidden sm:inline">Export</span>
             </Button>
@@ -330,13 +502,13 @@ export const AttendanceReports = () => {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Student
+                    {reportScope === 'students' ? 'Student' : 'Staff Member'}
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Roll #
+                    {reportScope === 'students' ? 'Roll #' : 'ID'}
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Class
+                    {reportScope === 'students' ? 'Class' : 'Department'}
                   </th>
                   <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Absences
@@ -347,25 +519,25 @@ export const AttendanceReports = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {frequentlyAbsentStudents.map((student) => (
-                  <tr key={student.id} className="hover:bg-gray-50">
+                {frequentlyAbsentStudents.map((person) => (
+                  <tr key={person.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center mr-3">
                           <User className="h-4 w-4 text-gray-500" />
                         </div>
-                        <div className="text-sm font-medium text-gray-900">{student.name}</div>
+                        <div className="text-sm font-medium text-gray-900">{person.name}</div>
                       </div>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                      {student.rollNumber}
+                      {person.rollNumber}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                      {student.class}
+                      {person.class}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
                       <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                        {student.absences} days
+                        {person.absences} days
                       </span>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
@@ -373,7 +545,7 @@ export const AttendanceReports = () => {
                         variant="outline" 
                         size="sm"
                         className="text-xs"
-                        onClick={() => toast.info(`Notification sent to ${student.name}'s parents`)}
+                        onClick={() => toast.info(`Notification sent to ${reportScope === 'students' ? `${person.name}'s parents` : person.name}`)}
                       >
                         Send Alert
                       </Button>
@@ -402,6 +574,19 @@ export const AttendanceReports = () => {
             <TabsContent value="daily" className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
+                  <Label htmlFor="report-scope-daily">Report Scope</Label>
+                  <Select value={reportScope} onValueChange={setReportScope}>
+                    <SelectTrigger id="report-scope-daily">
+                      <SelectValue placeholder="Select Report Scope" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="students">Students Attendance</SelectItem>
+                      <SelectItem value="staff">Staff Attendance</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              
+                <div className="space-y-2">
                   <Label htmlFor="report-type">Report Type</Label>
                   <Select value={reportType} onValueChange={setReportType}>
                     <SelectTrigger id="report-type">
@@ -409,13 +594,15 @@ export const AttendanceReports = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="class">Class Attendance</SelectItem>
-                      <SelectItem value="staff">Staff Attendance</SelectItem>
                       <SelectItem value="individual">Individual Student</SelectItem>
+                      {reportScope === 'staff' && (
+                        <SelectItem value="department">Department</SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
                 
-                {reportType === 'class' && (
+                {reportType === 'class' && reportScope === 'students' && (
                   <div className="space-y-2">
                     <Label htmlFor="class">Class</Label>
                     <Select value={selectedClass} onValueChange={setSelectedClass}>
@@ -429,6 +616,25 @@ export const AttendanceReports = () => {
                         <SelectItem value="class4">Class 4</SelectItem>
                         <SelectItem value="class5">Class 5</SelectItem>
                         <SelectItem value="class6">Class 6</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                
+                {reportType === 'department' && reportScope === 'staff' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="department">Department</Label>
+                    <Select value={selectedClass} onValueChange={setSelectedClass}>
+                      <SelectTrigger id="department">
+                        <SelectValue placeholder="Select Department" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="dept1">English</SelectItem>
+                        <SelectItem value="dept2">Mathematics</SelectItem>
+                        <SelectItem value="dept3">Science</SelectItem>
+                        <SelectItem value="dept4">Social Studies</SelectItem>
+                        <SelectItem value="dept5">Physical Education</SelectItem>
+                        <SelectItem value="dept6">Administration</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -448,7 +654,7 @@ export const AttendanceReports = () => {
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
-                        <Calendar
+                        <CalendarComponent
                           mode="single"
                           selected={startDate}
                           onSelect={setStartDate}
@@ -493,6 +699,19 @@ export const AttendanceReports = () => {
             <TabsContent value="weekly" className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
+                  <Label htmlFor="report-scope-weekly">Report Scope</Label>
+                  <Select value={reportScope} onValueChange={setReportScope}>
+                    <SelectTrigger id="report-scope-weekly">
+                      <SelectValue placeholder="Select Report Scope" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="students">Students Attendance</SelectItem>
+                      <SelectItem value="staff">Staff Attendance</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              
+                <div className="space-y-2">
                   <Label htmlFor="report-type-weekly">Report Type</Label>
                   <Select value={reportType} onValueChange={setReportType}>
                     <SelectTrigger id="report-type-weekly">
@@ -500,13 +719,15 @@ export const AttendanceReports = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="class">Class Attendance</SelectItem>
-                      <SelectItem value="staff">Staff Attendance</SelectItem>
                       <SelectItem value="individual">Individual Student</SelectItem>
+                      {reportScope === 'staff' && (
+                        <SelectItem value="department">Department</SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
                 
-                {reportType === 'class' && (
+                {reportType === 'class' && reportScope === 'students' && (
                   <div className="space-y-2">
                     <Label htmlFor="class-weekly">Class</Label>
                     <Select value={selectedClass} onValueChange={setSelectedClass}>
@@ -520,6 +741,25 @@ export const AttendanceReports = () => {
                         <SelectItem value="class4">Class 4</SelectItem>
                         <SelectItem value="class5">Class 5</SelectItem>
                         <SelectItem value="class6">Class 6</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                
+                {reportType === 'department' && reportScope === 'staff' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="department-weekly">Department</Label>
+                    <Select value={selectedClass} onValueChange={setSelectedClass}>
+                      <SelectTrigger id="department-weekly">
+                        <SelectValue placeholder="Select Department" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="dept1">English</SelectItem>
+                        <SelectItem value="dept2">Mathematics</SelectItem>
+                        <SelectItem value="dept3">Science</SelectItem>
+                        <SelectItem value="dept4">Social Studies</SelectItem>
+                        <SelectItem value="dept5">Physical Education</SelectItem>
+                        <SelectItem value="dept6">Administration</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -539,7 +779,7 @@ export const AttendanceReports = () => {
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
-                        <Calendar
+                        <CalendarComponent
                           mode="single"
                           selected={startDate}
                           onSelect={setStartDate}
@@ -557,143 +797,4 @@ export const AttendanceReports = () => {
                           <Calendar className="mr-2 h-4 w-4" onClick={handleIconClick} />
                           {endDate ? format(endDate, "MMM d, yyyy") : "End date"}
                         </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
-                        <Calendar
-                          mode="single"
-                          selected={endDate}
-                          onSelect={setEndDate}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex flex-wrap gap-3 mt-6">
-                <Button 
-                  className="flex items-center gap-2"
-                  onClick={() => handleGenerateReport('pdf')}
-                  disabled={isGeneratingReport}
-                >
-                  <FileText className="h-4 w-4" />
-                  <span>Export as PDF</span>
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="flex items-center gap-2"
-                  onClick={() => handleGenerateReport('excel')}
-                  disabled={isGeneratingReport}
-                >
-                  <FileSpreadsheet className="h-4 w-4" />
-                  <span>Export as Excel</span>
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="flex items-center gap-2"
-                  onClick={() => handleGenerateReport('csv')}
-                  disabled={isGeneratingReport}
-                >
-                  <ArrowDownToLine className="h-4 w-4" />
-                  <span>Export as CSV</span>
-                </Button>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="monthly" className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="report-type-monthly">Report Type</Label>
-                  <Select value={reportType} onValueChange={setReportType}>
-                    <SelectTrigger id="report-type-monthly">
-                      <SelectValue placeholder="Select Report Type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="class">Class Attendance</SelectItem>
-                      <SelectItem value="staff">Staff Attendance</SelectItem>
-                      <SelectItem value="individual">Individual Student</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                {reportType === 'class' && (
-                  <div className="space-y-2">
-                    <Label htmlFor="class-monthly">Class</Label>
-                    <Select value={selectedClass} onValueChange={setSelectedClass}>
-                      <SelectTrigger id="class-monthly">
-                        <SelectValue placeholder="Select Class" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="class1">Class 1</SelectItem>
-                        <SelectItem value="class2">Class 2</SelectItem>
-                        <SelectItem value="class3">Class 3</SelectItem>
-                        <SelectItem value="class4">Class 4</SelectItem>
-                        <SelectItem value="class5">Class 5</SelectItem>
-                        <SelectItem value="class6">Class 6</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-                
-                <div className="space-y-2 md:col-span-2">
-                  <Label>Month & Year</Label>
-                  <div className="flex items-center gap-2">
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="w-full justify-start text-left font-normal"
-                        >
-                          <Calendar className="mr-2 h-4 w-4" onClick={handleIconClick} />
-                          {startDate ? format(startDate, "MMMM yyyy") : "Select month"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
-                        <Calendar
-                          mode="single"
-                          selected={startDate}
-                          onSelect={setStartDate}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex flex-wrap gap-3 mt-6">
-                <Button 
-                  className="flex items-center gap-2"
-                  onClick={() => handleGenerateReport('pdf')}
-                  disabled={isGeneratingReport}
-                >
-                  <FileText className="h-4 w-4" />
-                  <span>Export as PDF</span>
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="flex items-center gap-2"
-                  onClick={() => handleGenerateReport('excel')}
-                  disabled={isGeneratingReport}
-                >
-                  <FileSpreadsheet className="h-4 w-4" />
-                  <span>Export as Excel</span>
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="flex items-center gap-2"
-                  onClick={() => handleGenerateReport('csv')}
-                  disabled={isGeneratingReport}
-                >
-                  <ArrowDownToLine className="h-4 w-4" />
-                  <span>Export as CSV</span>
-                </Button>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
-    </div>
-  );
-};
+                      
