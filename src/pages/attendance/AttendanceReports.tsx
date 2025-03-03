@@ -113,12 +113,11 @@ export const AttendanceReports = () => {
     toast.success("Filters have been reset");
   };
 
-  // Mock function to show class-specific data
+  // Fix: Update the function to handle clicks on XAxis or data points
   const showClassDetails = (className: string) => {
-    // In a real application, this would fetch data for the specific class
     toast.info(`Loading detailed report for ${className}`);
     
-    // For demo purposes, we'll just set some mock data
+    // Find the class data by name
     const mockClassData = classAttendanceData.find(c => c.name === className) || null;
     setSelectedClassData(mockClassData);
   };
@@ -277,7 +276,12 @@ export const AttendanceReports = () => {
                   <XAxis 
                     dataKey="name" 
                     tick={{ fill: '#666' }}
-                    onClick={(data) => data && showClassDetails(data.value)}
+                    onClick={(data) => {
+                      // Fixed: Properly handle XAxis click by checking if data exists
+                      if (data && data.hasOwnProperty('value')) {
+                        showClassDetails(data.value);
+                      }
+                    }}
                     className="cursor-pointer"
                   />
                   <YAxis tick={{ fill: '#666' }} />
