@@ -35,12 +35,13 @@ const AttendancePage = () => {
     <AppLayout 
       title="Attendance Management" 
       subtitle="Mark attendance and generate reports"
+      compact={activeTab === "reports"}
     >
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid grid-cols-3 w-full max-w-md mb-6">
-          <TabsTrigger value="students" className="text-sm">Student Attendance</TabsTrigger>
-          <TabsTrigger value="staff" className="text-sm">Staff Attendance</TabsTrigger>
-          <TabsTrigger value="reports" className="text-sm">Reports & Analytics</TabsTrigger>
+        <TabsList className="grid grid-cols-3 w-full max-w-md mb-4 shadow-sm">
+          <TabsTrigger value="students" className="text-sm">Students</TabsTrigger>
+          <TabsTrigger value="staff" className="text-sm">Staff</TabsTrigger>
+          <TabsTrigger value="reports" className="text-sm">Reports</TabsTrigger>
         </TabsList>
         <TabsContent value="students" className="animate-fade-in">
           <MarkStudentAttendance />

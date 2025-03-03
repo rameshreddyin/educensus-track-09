@@ -1,18 +1,31 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 import { 
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, 
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
 } from 'recharts';
 import { 
-  Download, FileText, FileSpreadsheet, AlertTriangle, User
+  Download, FileText, FileSpreadsheet, AlertTriangle, User,
+  Calendar, ChevronDown, ArrowDownToLine, ArrowRight, Filter
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { 
+  Popover, PopoverContent, PopoverTrigger 
+} from '@/components/ui/popover';
+import { format } from 'date-fns';
+import { Badge } from '@/components/ui/badge';
+import { 
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
+import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 // Mock data for class attendance
 const classAttendanceData = [
@@ -53,13 +66,15 @@ const frequentlyAbsentStudents = [
   { id: 5, name: 'David Wilson', rollNumber: 'R-1112', absences: 5, class: 'Class 5' }
 ];
 
-// Colors for pie chart
-const COLORS = ['#22c55e', '#ef4444', '#f59e0b', '#8b5cf6'];
+// Colors for pie chart - using grayscale
+const COLORS = ['#222222', '#666666', '#999999', '#cccccc'];
 
 export const AttendanceReports = () => {
   const [reportType, setReportType] = useState('class');
   const [reportPeriod, setReportPeriod] = useState('monthly');
   const [selectedClass, setSelectedClass] = useState('');
+  const [startDate, setStartDate] = useState<Date | undefined>(new Date());
+  const [endDate, setEndDate] = useState<Date | undefined>(new Date());
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
 
   const handleGenerateReport = (format: 'pdf' | 'excel' | 'csv') => {
@@ -89,64 +104,114 @@ export const AttendanceReports = () => {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <span className="inline-block w-3 h-3 bg-attendance-present rounded-full"></span>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="bg-white text-gray-900 shadow-sm hover:shadow transition-shadow">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-medium flex items-center gap-2">
+              <div className="w-3 h-3 bg-attendance-present rounded-full"></div>
               Present Rate
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">85%</div>
-            <p className="text-sm text-muted-foreground">School-wide average</p>
+            <p className="text-sm text-gray-500">School-wide average</p>
           </CardContent>
         </Card>
         
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <span className="inline-block w-3 h-3 bg-attendance-absent rounded-full"></span>
+        <Card className="bg-white text-gray-900 shadow-sm hover:shadow transition-shadow">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-medium flex items-center gap-2">
+              <div className="w-3 h-3 bg-attendance-absent rounded-full"></div>
               Absence Rate
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">10%</div>
-            <p className="text-sm text-muted-foreground">School-wide average</p>
+            <p className="text-sm text-gray-500">School-wide average</p>
           </CardContent>
         </Card>
         
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <span className="inline-block w-3 h-3 bg-attendance-late rounded-full"></span>
+        <Card className="bg-white text-gray-900 shadow-sm hover:shadow transition-shadow">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-medium flex items-center gap-2">
+              <div className="w-3 h-3 bg-attendance-late rounded-full"></div>
               Late Arrivals
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">5%</div>
-            <p className="text-sm text-muted-foreground">School-wide average</p>
+            <p className="text-sm text-gray-500">School-wide average</p>
           </CardContent>
         </Card>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <Card className="md:col-span-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card className="md:col-span-2 shadow-sm hover:shadow transition-shadow">
           <CardHeader>
-            <CardTitle>Class Attendance Overview</CardTitle>
-            <CardDescription>Comparison of attendance across all classes</CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Class Attendance Overview</CardTitle>
+                <CardDescription>Comparison of attendance across all classes</CardDescription>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <TooltipProvider>
+                  <UITooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="outline" size="sm" className="h-8">
+                        <Filter className="h-4 w-4 mr-1" /> 
+                        <span className="hidden sm:inline">Filter</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Filter data</p>
+                    </TooltipContent>
+                  </UITooltip>
+                </TooltipProvider>
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-8">
+                      <Download className="h-4 w-4 mr-1" /> 
+                      <span className="hidden sm:inline">Export</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem 
+                      className="flex items-center cursor-pointer"
+                      onClick={() => handleGenerateReport('pdf')}
+                    >
+                      <FileText className="h-4 w-4 mr-2" /> Export as PDF
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      className="flex items-center cursor-pointer"
+                      onClick={() => handleGenerateReport('excel')}
+                    >
+                      <FileSpreadsheet className="h-4 w-4 mr-2" /> Export as Excel
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="h-80">
+            <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={classAttendanceData}
                   margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+                  <XAxis dataKey="name" tick={{ fill: '#666' }} />
+                  <YAxis tick={{ fill: '#666' }} />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'white', 
+                      border: '1px solid #ccc',
+                      borderRadius: '4px',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                    }}
+                  />
                   <Legend />
                   <Bar dataKey="present" stackId="a" fill="#22c55e" name="Present" />
                   <Bar dataKey="absent" stackId="a" fill="#ef4444" name="Absent" />
@@ -157,10 +222,17 @@ export const AttendanceReports = () => {
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="shadow-sm hover:shadow transition-shadow">
           <CardHeader>
-            <CardTitle>Monthly Attendance Trend</CardTitle>
-            <CardDescription>Overall attendance percentage over the past months</CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Monthly Attendance Trend</CardTitle>
+                <CardDescription>Overall attendance percentage over time</CardDescription>
+              </div>
+              <Button variant="outline" size="sm" className="h-8">
+                <Download className="h-4 w-4" />
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="h-60">
@@ -169,18 +241,25 @@ export const AttendanceReports = () => {
                   data={monthlyTrendData}
                   margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis domain={[80, 100]} />
-                  <Tooltip />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+                  <XAxis dataKey="name" tick={{ fill: '#666' }} />
+                  <YAxis domain={[80, 100]} tick={{ fill: '#666' }} />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'white', 
+                      border: '1px solid #ccc',
+                      borderRadius: '4px',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                    }}
+                  />
                   <Legend />
                   <Line 
                     type="monotone" 
                     dataKey="attendance" 
-                    stroke="#3b82f6" 
+                    stroke="#222222" 
                     strokeWidth={2}
-                    dot={{ r: 4 }}
-                    activeDot={{ r: 6 }}
+                    dot={{ r: 4, fill: '#222222' }}
+                    activeDot={{ r: 6, fill: '#222222' }}
                     name="Attendance %"
                   />
                 </LineChart>
@@ -189,10 +268,17 @@ export const AttendanceReports = () => {
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="shadow-sm hover:shadow transition-shadow">
           <CardHeader>
-            <CardTitle>Attendance Distribution</CardTitle>
-            <CardDescription>School-wide attendance status breakdown</CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Attendance Distribution</CardTitle>
+                <CardDescription>School-wide attendance status breakdown</CardDescription>
+              </div>
+              <Button variant="outline" size="sm" className="h-8">
+                <Download className="h-4 w-4" />
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="h-60 flex items-center justify-center">
@@ -209,10 +295,17 @@ export const AttendanceReports = () => {
                     label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                   >
                     {attendanceDistributionData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell key={`cell-${index}`} fill={index === 0 ? "#22c55e" : index === 1 ? "#ef4444" : "#f59e0b"} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'white', 
+                      border: '1px solid #ccc',
+                      borderRadius: '4px',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                    }}
+                  />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
@@ -221,17 +314,25 @@ export const AttendanceReports = () => {
         </Card>
       </div>
       
-      <Card>
+      <Card className="shadow-sm hover:shadow transition-shadow">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-amber-500" />
-            Frequently Absent Students
-          </CardTitle>
-          <CardDescription>Students with the highest absence rates this term</CardDescription>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              <div>
+                <CardTitle>Frequently Absent Students</CardTitle>
+                <CardDescription>Students with the highest absence rates this term</CardDescription>
+              </div>
+            </div>
+            <Button variant="outline" size="sm" className="h-8">
+              <Download className="h-4 w-4 mr-1" />
+              <span className="hidden sm:inline">Export</span>
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
-            <table className="min-w-full bg-white">
+            <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -251,7 +352,7 @@ export const AttendanceReports = () => {
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="bg-white divide-y divide-gray-200">
                 {frequentlyAbsentStudents.map((student) => (
                   <tr key={student.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 whitespace-nowrap">
@@ -291,7 +392,7 @@ export const AttendanceReports = () => {
         </CardContent>
       </Card>
       
-      <Card>
+      <Card className="shadow-sm hover:shadow transition-shadow">
         <CardHeader>
           <CardTitle>Generate Reports</CardTitle>
           <CardDescription>Download attendance reports in various formats</CardDescription>
@@ -338,11 +439,35 @@ export const AttendanceReports = () => {
                     </Select>
                   </div>
                 )}
+                
+                <div className="space-y-2 md:col-span-2">
+                  <Label>Date</Label>
+                  <div className="flex items-center gap-2">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start text-left font-normal"
+                        >
+                          <Calendar className="mr-2 h-4 w-4" />
+                          {startDate ? format(startDate, "PPP") : "Select date"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={startDate}
+                          onSelect={setStartDate}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                </div>
               </div>
               
               <div className="flex flex-wrap gap-3 mt-6">
                 <Button 
-                  variant="outline" 
                   className="flex items-center gap-2"
                   onClick={() => handleGenerateReport('pdf')}
                   disabled={isGeneratingReport}
@@ -365,7 +490,7 @@ export const AttendanceReports = () => {
                   onClick={() => handleGenerateReport('csv')}
                   disabled={isGeneratingReport}
                 >
-                  <Download className="h-4 w-4" />
+                  <ArrowDownToLine className="h-4 w-4" />
                   <span>Export as CSV</span>
                 </Button>
               </div>
@@ -405,11 +530,55 @@ export const AttendanceReports = () => {
                     </Select>
                   </div>
                 )}
+                
+                <div className="space-y-2 md:col-span-2">
+                  <Label>Date Range</Label>
+                  <div className="flex items-center gap-2">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-[180px] justify-start text-left font-normal"
+                        >
+                          <Calendar className="mr-2 h-4 w-4" />
+                          {startDate ? format(startDate, "MMM d, yyyy") : "Start date"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={startDate}
+                          onSelect={setStartDate}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-[180px] justify-start text-left font-normal"
+                        >
+                          <Calendar className="mr-2 h-4 w-4" />
+                          {endDate ? format(endDate, "MMM d, yyyy") : "End date"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={endDate}
+                          onSelect={setEndDate}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                </div>
               </div>
               
               <div className="flex flex-wrap gap-3 mt-6">
                 <Button 
-                  variant="outline" 
                   className="flex items-center gap-2"
                   onClick={() => handleGenerateReport('pdf')}
                   disabled={isGeneratingReport}
@@ -432,7 +601,7 @@ export const AttendanceReports = () => {
                   onClick={() => handleGenerateReport('csv')}
                   disabled={isGeneratingReport}
                 >
-                  <Download className="h-4 w-4" />
+                  <ArrowDownToLine className="h-4 w-4" />
                   <span>Export as CSV</span>
                 </Button>
               </div>
@@ -472,11 +641,35 @@ export const AttendanceReports = () => {
                     </Select>
                   </div>
                 )}
+                
+                <div className="space-y-2 md:col-span-2">
+                  <Label>Month & Year</Label>
+                  <div className="flex items-center gap-2">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start text-left font-normal"
+                        >
+                          <Calendar className="mr-2 h-4 w-4" />
+                          {startDate ? format(startDate, "MMMM yyyy") : "Select month"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={startDate}
+                          onSelect={setStartDate}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                </div>
               </div>
               
               <div className="flex flex-wrap gap-3 mt-6">
                 <Button 
-                  variant="outline" 
                   className="flex items-center gap-2"
                   onClick={() => handleGenerateReport('pdf')}
                   disabled={isGeneratingReport}
@@ -499,7 +692,7 @@ export const AttendanceReports = () => {
                   onClick={() => handleGenerateReport('csv')}
                   disabled={isGeneratingReport}
                 >
-                  <Download className="h-4 w-4" />
+                  <ArrowDownToLine className="h-4 w-4" />
                   <span>Export as CSV</span>
                 </Button>
               </div>
