@@ -1,4 +1,4 @@
-<lov-code>
+
 import React, { useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -797,4 +797,178 @@ export const AttendanceReports = () => {
                           <Calendar className="mr-2 h-4 w-4" onClick={handleIconClick} />
                           {endDate ? format(endDate, "MMM d, yyyy") : "End date"}
                         </Button>
-                      
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <CalendarComponent
+                          mode="single"
+                          selected={endDate}
+                          onSelect={setEndDate}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex flex-wrap gap-3 mt-6">
+                <Button 
+                  className="flex items-center gap-2"
+                  onClick={() => handleGenerateReport('pdf')}
+                  disabled={isGeneratingReport}
+                >
+                  <FileText className="h-4 w-4" />
+                  <span>Export as PDF</span>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="flex items-center gap-2"
+                  onClick={() => handleGenerateReport('excel')}
+                  disabled={isGeneratingReport}
+                >
+                  <FileSpreadsheet className="h-4 w-4" />
+                  <span>Export as Excel</span>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="flex items-center gap-2"
+                  onClick={() => handleGenerateReport('csv')}
+                  disabled={isGeneratingReport}
+                >
+                  <ArrowDownToLine className="h-4 w-4" />
+                  <span>Export as CSV</span>
+                </Button>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="monthly" className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="report-scope-monthly">Report Scope</Label>
+                  <Select value={reportScope} onValueChange={setReportScope}>
+                    <SelectTrigger id="report-scope-monthly">
+                      <SelectValue placeholder="Select Report Scope" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="students">Students Attendance</SelectItem>
+                      <SelectItem value="staff">Staff Attendance</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="month">Month</Label>
+                  <Select defaultValue="current">
+                    <SelectTrigger id="month">
+                      <SelectValue placeholder="Select Month" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="current">Current Month</SelectItem>
+                      <SelectItem value="january">January</SelectItem>
+                      <SelectItem value="february">February</SelectItem>
+                      <SelectItem value="march">March</SelectItem>
+                      <SelectItem value="april">April</SelectItem>
+                      <SelectItem value="may">May</SelectItem>
+                      <SelectItem value="june">June</SelectItem>
+                      <SelectItem value="july">July</SelectItem>
+                      <SelectItem value="august">August</SelectItem>
+                      <SelectItem value="september">September</SelectItem>
+                      <SelectItem value="october">October</SelectItem>
+                      <SelectItem value="november">November</SelectItem>
+                      <SelectItem value="december">December</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="year">Year</Label>
+                  <Select defaultValue="current">
+                    <SelectTrigger id="year">
+                      <SelectValue placeholder="Select Year" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="current">Current Year</SelectItem>
+                      <SelectItem value="2023">2023</SelectItem>
+                      <SelectItem value="2022">2022</SelectItem>
+                      <SelectItem value="2021">2021</SelectItem>
+                      <SelectItem value="2020">2020</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                {reportScope === 'students' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="class-monthly">Class</Label>
+                    <Select value={selectedClass} onValueChange={setSelectedClass}>
+                      <SelectTrigger id="class-monthly">
+                        <SelectValue placeholder="Select Class" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">All Classes</SelectItem>
+                        <SelectItem value="class1">Class 1</SelectItem>
+                        <SelectItem value="class2">Class 2</SelectItem>
+                        <SelectItem value="class3">Class 3</SelectItem>
+                        <SelectItem value="class4">Class 4</SelectItem>
+                        <SelectItem value="class5">Class 5</SelectItem>
+                        <SelectItem value="class6">Class 6</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                
+                {reportScope === 'staff' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="department-monthly">Department</Label>
+                    <Select>
+                      <SelectTrigger id="department-monthly">
+                        <SelectValue placeholder="Select Department" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">All Departments</SelectItem>
+                        <SelectItem value="dept1">English</SelectItem>
+                        <SelectItem value="dept2">Mathematics</SelectItem>
+                        <SelectItem value="dept3">Science</SelectItem>
+                        <SelectItem value="dept4">Social Studies</SelectItem>
+                        <SelectItem value="dept5">Physical Education</SelectItem>
+                        <SelectItem value="dept6">Administration</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex flex-wrap gap-3 mt-6">
+                <Button 
+                  className="flex items-center gap-2"
+                  onClick={() => handleGenerateReport('pdf')}
+                  disabled={isGeneratingReport}
+                >
+                  <FileText className="h-4 w-4" />
+                  <span>Export as PDF</span>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="flex items-center gap-2"
+                  onClick={() => handleGenerateReport('excel')}
+                  disabled={isGeneratingReport}
+                >
+                  <FileSpreadsheet className="h-4 w-4" />
+                  <span>Export as Excel</span>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="flex items-center gap-2"
+                  onClick={() => handleGenerateReport('csv')}
+                  disabled={isGeneratingReport}
+                >
+                  <ArrowDownToLine className="h-4 w-4" />
+                  <span>Export as CSV</span>
+                </Button>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
